@@ -80,3 +80,11 @@ The custom theme is located in `themes/mextner/` with:
 - Multilingual content should be created in both `/en/` and `/ru/` directories
 - The theme uses custom partials for head, header, footer components
 - Goldmark renderer is set to unsafe mode for HTML in markdown
+
+## Deployment
+
+Push to `main` → `.github/workflows/deploy.yml`: Hugo builds on a GitHub-hosted runner, then the
+`deploy` job runs on the self-hosted runner `odroid-mextner` (home server) and rsyncs `public/` to
+`/var/www/mextner.com`. `Caddyfile` is the origin config for `caddy-mextner.service`
+(plain HTTP on `127.0.0.1:8081`, reloaded on change). TLS and public traffic go through
+Cloudflare Tunnel `odroid-home` (DNS for mextner.com is on Cloudflare). Manual redeploy: `./deploy.sh`.

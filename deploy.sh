@@ -1,46 +1,25 @@
 #!/bin/bash
+# Manual redeploy: runs the same GitHub Actions pipeline as a push to main
+# (build on GitHub, publish on the odroid self-hosted runner), then waits for it.
+set -euo pipefail
 
-# Exit on error
-set -e
+REPO=alex-mextner/mextner.com
+latest_dispatch() {
+  gh run list -R "$REPO" --workflow deploy.yml --event workflow_dispatch -L1 \
+    --json databaseId -q '.[0].databaseId // 0'
+}
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Run ids increase monotonically, so the new run is the first id above the
+# pre-dispatch one (no clock comparison between this machine and GitHub).
+before=$(latest_dispatch)
+gh workflow run deploy.yml -R "$REPO" --ref main
 
-# Configuration
-REMOTE_USER="www-data"
-REMOTE_HOST="104.248.84.190"
-REMOTE_PATH="/var/www/mextner.com"
+run_id=$before
+for _ in $(seq 1 15); do
+  run_id=$(latest_dispatch) || run_id=$before # transient API error: keep polling
+  [ "$run_id" != "$before" ] && break
+  sleep 2
+done
+[ "$run_id" != "$before" ] || { echo "dispatched run not found" >&2; exit 1; }
 
-echo -e "${YELLOW}🚀 Starting deployment to mextner.com${NC}"
-
-# Build the site
-echo -e "${YELLOW}📦 Building Hugo site...${NC}"
-hugo --minify
-
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Hugo build successful${NC}"
-else
-    echo -e "${RED}❌ Hugo build failed${NC}"
-    exit 1
-fi
-
-# Deploy to server
-echo -e "${YELLOW}📤 Deploying to server...${NC}"
-rsync -avz --delete \
-    --exclude '.DS_Store' \
-    --exclude '*.swp' \
-    --exclude 'Thumbs.db' \
-    --progress \
-    public/ \
-    ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}/
-
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Deployment complete!${NC}"
-    echo -e "${GREEN}🌐 Site is live at: https://mextner.com${NC}"
-else
-    echo -e "${RED}❌ Deployment failed${NC}"
-    exit 1
-fi
+gh run watch "$run_id" -R "$REPO" --exit-status

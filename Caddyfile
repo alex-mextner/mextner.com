@@ -1,94 +1,79 @@
-# Redirect www to non-www
-www.mextner.com {
-    redir https://mextner.com{uri} permanent
+# Origin for mextner.com on the home server (odroid), served by caddy-mextner.service.
+# Cloudflare Tunnel terminates TLS and forwards mextner.com / www.mextner.com here,
+# so this instance listens on plain HTTP, loopback only.
+{
+	admin off
+	auto_https off
 }
 
-# Main site configuration
-mextner.com {
-    # Document root
-    root * /var/www/mextner.com
+http://:8081 {
+	bind 127.0.0.1
 
-    # Enable file server
-    file_server
+	# Redirect www to non-www
+	@www host www.mextner.com
+	redir @www https://mextner.com{uri} permanent
 
-    # Enable gzip compression
-    encode gzip
+	root * /var/www/mextner.com
+	file_server
+	encode gzip
 
-    # Security headers
-    header {
-        # Enable HSTS
-        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        
-        # Prevent clickjacking
-        X-Frame-Options "SAMEORIGIN"
-        
-        # Prevent MIME type sniffing
-        X-Content-Type-Options "nosniff"
-        
-        # Enable XSS filter
-        X-XSS-Protection "1; mode=block"
-        
-        # Referrer policy
-        Referrer-Policy "strict-origin-when-cross-origin"
-        
-        # Permissions policy
-        Permissions-Policy "geolocation=(), microphone=(), camera=()"
-        
-        # Remove server header
-        -Server
-    }
+	# Security headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		-Server
+	}
 
-    # Handle clean URLs for Hugo
-    try_files {path} {path}.html {path}/
+	# Handle clean URLs for Hugo
+	try_files {path} {path}.html {path}/
 
-    # Custom 404 page
-    handle_errors {
-        @404 {
-            expression {http.error.status_code} == 404
-        }
-        rewrite @404 /404.html
-        file_server
-    }
+	# Custom 404 page
+	handle_errors {
+		@404 {
+			expression {http.error.status_code} == 404
+		}
+		rewrite @404 /404.html
+		file_server
+	}
 
-    # Always revalidate CSS and JS
-    @css_js {
-        path *.css *.js
-    }
-    header @css_js {
-        Cache-Control "no-cache"
-    }
+	# Always revalidate CSS and JS
+	@css_js {
+		path *.css *.js
+	}
+	header @css_js {
+		Cache-Control "no-cache"
+	}
 
-    # Cache images for 1 hour
-    @images {
-        path *.jpg *.jpeg *.png *.gif *.svg *.webp *.ico
-    }
-    header @images {
-        Cache-Control "public, max-age=3600"
-    }
+	# Cache images for 1 hour
+	@images {
+		path *.jpg *.jpeg *.png *.gif *.svg *.webp *.ico
+	}
+	header @images {
+		Cache-Control "public, max-age=3600"
+	}
 
-    # Cache fonts for 1 year
-    @fonts {
-        path *.woff *.woff2 *.ttf *.eot *.otf
-    }
-    header @fonts {
-        Cache-Control "public, max-age=31536000, immutable"
-    }
+	# Cache fonts for 1 year
+	@fonts {
+		path *.woff *.woff2 *.ttf *.eot *.otf
+	}
+	header @fonts {
+		Cache-Control "public, max-age=31536000, immutable"
+	}
 
-    # Always revalidate HTML
-    @html {
-        path *.html
-    }
-    header @html {
-        Cache-Control "no-cache"
-    }
+	# Always revalidate HTML
+	@html {
+		path *.html
+	}
+	header @html {
+		Cache-Control "no-cache"
+	}
 
-    # Log configuration
-    log {
-        output file /var/log/caddy/mextner.com.log {
-            roll_size 100mb
-            roll_keep 5
-            roll_keep_for 720h
-        }
-        format console
-    }
+	log {
+		output stdout
+		format console
+	}
 }
