@@ -44,13 +44,14 @@ jobs:
   deploy:
     needs: build
     runs-on: [self-hosted, odroid]
-    timeout-minutes: 10
-    # Serialize only publication; never interrupt a running rsync --delete.
+    # Serialize only publication; never interrupt a running rsync --delete, so
+    # timeouts are per step and Publish has none.
     concurrency:
       group: deploy-production
       cancel-in-progress: false
     steps:
       - name: Download site
+        timeout-minutes: 5
         uses: actions/download-artifact@v4
         with:
           name: site
@@ -65,12 +66,15 @@ jobs:
           install -m 644 site/Caddyfile /var/www/mextner.com.caddy/Caddyfile
 
       - name: Smoke check
+        timeout-minutes: 2
         run: |
-          # Give caddy --watch time to pick up a changed Caddyfile.
+          # Retries give caddy --watch time to pick up a changed Caddyfile.
           for _ in 1 2 3 4 5; do
-            code=$(curl -s --connect-timeout 2 --max-time 5 -o /dev/null -w '%{http_code}' -H 'Host: mextner.com' http://127.0.0.1:8081/ || true)
-            echo "origin status: $code"
-            [ "$code" = 200 ] && exit 0
+            if curl -sf --connect-timeout 2 --max-time 5 -o /dev/null -H 'Host: mextner.com' http://127.0.0.1:8081/; then
+              echo "origin OK"
+              exit 0
+            fi
             sleep 2
           done
+          echo "origin not serving mextner.com" >&2
           exit 1
