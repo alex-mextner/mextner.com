@@ -1,46 +1,75 @@
 name: Deploy to Production
 
+# Build on a GitHub-hosted runner, publish on the home server (odroid) through its
+# self-hosted runner. Public traffic reaches the odroid via Cloudflare Tunnel, so
+# the server has no inbound ports and needs no SSH secrets here.
+
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: true  # Fetch Hugo themes
-        fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true # Hugo themes
+          fetch-depth: 0 # .GitInfo and .Lastmod
 
-    - name: Setup Hugo
-      uses: peaceiris/actions-hugo@v2
-      with:
-        hugo-version: 'latest'
-        extended: true
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: 'latest'
+          extended: true
 
-    - name: Build
-      run: hugo --minify
+      - name: Build
+        run: hugo --minify
 
-    - name: Install SSH Key
-      uses: shimataro/ssh-key-action@v2
-      with:
-        key: ${{ secrets.DEPLOY_SSH_KEY }}
-        known_hosts: ${{ secrets.KNOWN_HOSTS }}
+      - name: Upload site
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: |
+            public/
+            Caddyfile
+          retention-days: 7
 
-    - name: Deploy to Server
-      run: |
-        rsync -avz --delete \
-          --exclude '.DS_Store' \
-          --exclude '*.swp' \
-          --exclude 'Thumbs.db' \
-          public/ \
-          www-data@104.248.84.190:/var/www/mextner.com/
+  deploy:
+    needs: build
+    runs-on: [self-hosted, odroid]
+    # Serialize only publication; never interrupt a running rsync --delete.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - name: Download site
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site
 
-    - name: Copy Caddyfile to server
-      run: |
-        scp Caddyfile www-data@104.248.84.190:/var/www/mextner.com/Caddyfile
-        ssh www-data@104.248.84.190 "echo 'Caddyfile deployed to /var/www/mextner.com/'"
+      - name: Publish
+        run: |
+          rsync -a --delete \
+            --exclude '.DS_Store' --exclude '*.swp' --exclude 'Thumbs.db' \
+            site/public/ /var/www/mextner.com/
+          # caddy-mextner.service runs with --watch and reloads on change.
+          install -m 644 site/Caddyfile /var/www/mextner.com.caddy/Caddyfile
+
+      - name: Smoke check
+        run: |
+          # Give caddy --watch time to pick up a changed Caddyfile.
+          for _ in 1 2 3 4 5; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: mextner.com' http://127.0.0.1:8081/ || true)
+            echo "origin status: $code"
+            [ "$code" = 200 ] && exit 0
+            sleep 2
+          done
+          exit 1
