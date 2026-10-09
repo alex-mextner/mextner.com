@@ -44,6 +44,7 @@ jobs:
   deploy:
     needs: build
     runs-on: [self-hosted, odroid]
+    timeout-minutes: 10
     # Serialize only publication; never interrupt a running rsync --delete.
     concurrency:
       group: deploy-production
@@ -67,7 +68,7 @@ jobs:
         run: |
           # Give caddy --watch time to pick up a changed Caddyfile.
           for _ in 1 2 3 4 5; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: mextner.com' http://127.0.0.1:8081/ || true)
+            code=$(curl -s --connect-timeout 2 --max-time 5 -o /dev/null -w '%{http_code}' -H 'Host: mextner.com' http://127.0.0.1:8081/ || true)
             echo "origin status: $code"
             [ "$code" = 200 ] && exit 0
             sleep 2
