@@ -16,7 +16,7 @@ gh workflow run deploy.yml -R "$REPO" --ref main
 
 run_id=$before
 for _ in $(seq 1 15); do
-  run_id=$(latest_dispatch)
+  run_id=$(latest_dispatch) || run_id=$before # transient API error: keep polling
   [ "$run_id" != "$before" ] && break
   sleep 2
 done
