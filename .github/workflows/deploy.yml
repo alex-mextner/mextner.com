@@ -44,8 +44,9 @@ jobs:
   deploy:
     needs: build
     runs-on: [self-hosted, odroid]
-    # Serialize only publication; never interrupt a running rsync --delete, so
-    # timeouts are per step and Publish has none.
+    # Serialize only publication. Publish has no step timeout so a slow rsync
+    # --delete is not cut short; the job cap only guards against a wedged runner.
+    timeout-minutes: 30
     concurrency:
       group: deploy-production
       cancel-in-progress: false
@@ -70,10 +71,13 @@ jobs:
         run: |
           # Retries give caddy --watch time to pick up a changed Caddyfile.
           for _ in 1 2 3 4 5; do
-            if curl -sf --connect-timeout 2 --max-time 5 -o /dev/null -H 'Host: mextner.com' http://127.0.0.1:8081/; then
+            # Exact 200 with a complete transfer: a redirect or truncated body fails.
+            if code=$(curl -s --connect-timeout 2 --max-time 5 -o /dev/null -w '%{http_code}' \
+                -H 'Host: mextner.com' http://127.0.0.1:8081/) && [ "$code" = 200 ]; then
               echo "origin OK"
               exit 0
             fi
+            echo "origin status: ${code:-none}"
             sleep 2
           done
           echo "origin not serving mextner.com" >&2
