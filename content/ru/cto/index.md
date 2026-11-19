@@ -68,9 +68,8 @@ title: "CTO"
 
 <section id="contact">
   <h2>Контакты и ссылки</h2>
-  <p>Вы можете связаться с мной по электронной почте или подключиться к LinkedIn.</p>
+  <p>Вы можете связаться со мной в LinkedIn.</p>
   <ul>
-    <li><strong>Email:</strong> <a href="mailto:invntrm@gmail.com">invntrm@gmail.com</a></li>
     <li><strong>LinkedIn:</strong> <a href="https://linkedin.com/in/FrontDev" target="_blank">linkedin.com/in/FrontDev</a></li>
   </ul>
 </section>

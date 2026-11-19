@@ -38,7 +38,7 @@ translationKey: "workshops"
       <label for="name">Имя:</label>
       <input type="text" name="entry.2045258218" id="name" placeholder="Иван Иванов" required>
       <label for="email">Email:</label>
-      <input type="email" name="entry.1911566836" id="email" placeholder="ivan@company.ru" required>
+      <input type="email" name="entry.1911566836" id="email" placeholder="ivan@example.com" required>
       <label for="company">Компания:</label>
       <input type="text" name="entry.1876465620" id="company" placeholder="ООО Компания (необязательно)">
     </div>
@@ -58,7 +58,6 @@ translationKey: "workshops"
       <button type="submit" class="btn">Отправить заявку</button>
     </div>
   </form>
-  <p style="text-align: center; margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">Или напишите нам напрямую на workshops@mextner.com</p>
   
   <script>
     // Pre-fill form from URL parameters

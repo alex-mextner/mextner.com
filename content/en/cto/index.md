@@ -77,9 +77,8 @@ translationKey: "about"
 
 <section id="contact">
   <h2>Contact & Links</h2>
-  <p>You can reach me via email or connect with me on LinkedIn.</p>
+  <p>You can connect with me on LinkedIn.</p>
   <ul>
-    <li><strong>Email:</strong> <a href="mailto:invntrm@gmail.com">invntrm@gmail.com</a></li>
     <li><strong>LinkedIn:</strong> <a href="https://linkedin.com/in/FrontDev" target="_blank">linkedin.com/in/FrontDev</a></li>
   </ul>
 </section>

@@ -84,7 +84,7 @@ The custom theme is located in `themes/mextner/` with:
 ## Deployment
 
 Push to `main` → `.github/workflows/deploy.yml`: Hugo builds on a GitHub-hosted runner, then the
-`deploy` job runs on the self-hosted runner `odroid-mextner` (home server) and rsyncs `public/` to
+`deploy` job runs on the self-hosted runner (home server; its labels come from the `DEPLOY_RUNNER_LABELS` repository variable, a JSON array such as `["self-hosted","<runner-label>"]`) and rsyncs `public/` to
 `/var/www/mextner.com`. `Caddyfile` is the origin config for `caddy-mextner.service`
 (plain HTTP on `127.0.0.1:8081`, reloaded on change). TLS and public traffic go through
-Cloudflare Tunnel `odroid-home` (DNS for mextner.com is on Cloudflare). Manual redeploy: `./deploy.sh`.
+Cloudflare Tunnel `<tunnel-name>` (DNS for mextner.com is on Cloudflare). Manual redeploy: `./deploy.sh`.
