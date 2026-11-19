@@ -1,7 +1,7 @@
 name: Deploy to Production
 
-# Build on a GitHub-hosted runner, publish on the home server (odroid) through its
-# self-hosted runner. Public traffic reaches the odroid via Cloudflare Tunnel, so
+# Build on a GitHub-hosted runner, publish on the home server through its
+# self-hosted runner. Public traffic reaches the home server via Cloudflare Tunnel, so
 # the server has no inbound ports and needs no SSH secrets here.
 
 on:
@@ -43,7 +43,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: [self-hosted, odroid]
+    runs-on: ${{ fromJSON(vars.DEPLOY_RUNNER_LABELS) }}
     # Serialize only publication. Publish has no step timeout so a slow rsync
     # --delete is not cut short; the job cap only guards against a wedged runner.
     timeout-minutes: 30

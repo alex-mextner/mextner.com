@@ -1,4 +1,4 @@
-# Origin for mextner.com on the home server (odroid), served by caddy-mextner.service.
+# Origin for mextner.com on the home server, served by caddy-mextner.service.
 # Cloudflare Tunnel terminates TLS and forwards mextner.com / www.mextner.com here,
 # so this instance listens on plain HTTP, loopback only.
 {

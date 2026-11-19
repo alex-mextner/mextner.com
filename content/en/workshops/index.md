@@ -38,7 +38,7 @@ translationKey: "workshops"
       <label for="name">Name:</label>
       <input type="text" name="entry.2045258218" id="name" placeholder="John Doe" required>
       <label for="email">Email:</label>
-      <input type="email" name="entry.1911566836" id="email" placeholder="john@company.com" required>
+      <input type="email" name="entry.1911566836" id="email" placeholder="john@example.com" required>
       <label for="company">Company:</label>
       <input type="text" name="entry.1876465620" id="company" placeholder="ACME Corp (optional)">
     </div>
@@ -58,7 +58,6 @@ translationKey: "workshops"
       <button type="submit" class="btn">Submit Application</button>
     </div>
   </form>
-  <p style="text-align: center; margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">Or email us directly at workshops@mextner.com</p>
   
   <script>
     // Pre-fill form from URL parameters

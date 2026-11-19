@@ -1,6 +1,6 @@
 #!/bin/bash
 # Manual redeploy: runs the same GitHub Actions pipeline as a push to main
-# (build on GitHub, publish on the odroid self-hosted runner), then waits for it.
+# (build on GitHub, publish on the self-hosted runner), then waits for it.
 set -euo pipefail
 
 REPO=alex-mextner/mextner.com
